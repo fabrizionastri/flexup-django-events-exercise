@@ -1,0 +1,314 @@
+
+{% extends "base.html" %}
+{% block title %}
+    {% if form.instance.pk %}
+        {{event.name}}
+    {%else%}
+        Create Event
+    {%endif%}
+{% endblock title %}
+{% block content %}
+{% if not form.instance.pk or editable%}
+<div class="max-w-2xl mx-auto pt-12">
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">{% if editable %}Edit{%else%}Create{%endif%} Event</h1>
+        </div>
+{% endif %}    
+        <form method="POST" id="event-form" class="space-y-4" {% if form.instance.pk %}data-readonly="true"{% endif %}>
+            {% csrf_token %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="{{ form.name.id_for_label }}">
+                    {{ form.name.label }}
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="{{ form.description.id_for_label }}">
+                    {{ form.description.label }}
+                </label>
+                <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="3"
+                    {% if view_mode_only%}disabled="true"{% endif %}
+                    class="{%if form.instance.pk and not editable%}bg-blue-50 {%else%}border {% endif %}mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="{{ form.location.id_for_label }}">
+                    {{ form.location.label }}
+                </label>
+                {{ form.location }}
+                {% if form.location.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.location.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="{{ form.start_date.id_for_label }}">
+                        {{ form.start_date.label }}
+                    </label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.start_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="{{ form.start_time.id_for_label }}">
+                        {{ form.start_time.label }}
+                    </label>
+                    {{ form.start_time }}
+                    {% if form.start_time.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.start_time.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="{{ form.end_date.id_for_label }}">
+                        {{ form.end_date.label }}
+                    </label>
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.end_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="{{ form.end_time.id_for_label }}">
+                        {{ form.end_time.label }}
+                    </label>
+                    {{ form.end_time }}
+                    {% if form.end_time.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.end_time.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex items-center">
+                {{ form.is_all_day }}
+                <label class="ml-2 text-sm font-medium text-gray-700" for="{{ form.is_all_day.id_for_label }}">
+                    {{ form.is_all_day.label }}
+                </label>
+                {% if form.is_all_day.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.is_all_day.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 w-full" for="{{ form.min_attendees.id_for_label }}">
+                        {{ form.min_attendees.label }}
+                    </label>
+                    {{ form.min_attendees }}
+                    {% if form.min_attendees.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.min_attendees.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 w-full" for="{{ form.max_attendees.id_for_label }}">
+                        {{ form.max_attendees.label }}
+                    </label>
+                    {{ form.max_attendees }}
+                    {% if form.max_attendees.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.max_attendees.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            <!--adding tooltip to waiting list check box-->
+            <div class="flex items-center relative group">
+                {{ form.waiting_list }}
+                <label data-tooltip-target="tooltip-default"
+                    data-tooltip-placement="right"
+                    class="ml-2 text-sm font-medium text-gray-700 w-full cursor-pointer"
+                    for="{{ form.waiting_list.auto_id }}">
+                    {{ form.waiting_list.label }}
+                </label>
+
+                <div id="tooltip-default" role="tooltip"
+                    class="absolute left-0 top-full mt-1 z-10 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-lg dark:bg-gray-700">
+                    Guests need approval before attending the event.
+                    <div class="absolute w-3 h-3 bg-gray-900 rotate-45 -top-1 left-1/2 transform -translate-x-1/2 dark:bg-gray-700"></div>
+                </div>
+
+            
+                {% if form.waiting_list.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.waiting_list.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            {% if form.instance.pk and not view_mode_only and form.organizerLink %}
+                <div>
+                    <div class="flex items-center relative group">
+                        <label data-tooltip-target="tooltip-organizer-link"
+                            class="block bg-blue-50 text-sm font-medium text-gray-700 border cursor-pointer copy-label"
+                            for="{{ form.organizerLink.id_for_label }}">
+                            {{ form.organizerLink.label }}
+                        </label>
+                        <input type="text" id="{{ form.organizerLink.id_for_label }}" name="{{ form.organizerLink.html_name }}"
+                            value="{{ form.organizerLink.value }}" style="display: none;">
+                        <div id="tooltip-organizer-link" role="tooltip"
+                            class="absolute left-0 top-full mt-1 z-10 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-lg dark:bg-gray-700">
+                            Click the label to copy.
+                            <div class="absolute w-3 h-3 bg-gray-900 rotate-45 -top-1 left-1/2 transform -translate-x-1/2 dark:bg-gray-700"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center relative group">
+                        <label data-tooltip-target="tooltip-registration-link"
+                            class="block bg-blue-50 text-sm font-medium text-gray-700 border cursor-pointer copy-label"
+                            for="{{ form.registrationLink.id_for_label }}">
+                            {{ form.registrationLink.label }}
+                        </label>
+                        <input type="text" id="{{ form.registrationLink.id_for_label }}" name="{{ form.registrationLink.html_name }}"
+                        value="{{ form.registrationLink.value }}" style="display: none;">
+                        <div id="tooltip-registration-link" role="tooltip"
+                            class="absolute left-0 top-full mt-1 z-10 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-lg dark:bg-gray-700">
+                            Click the label to copy.
+                            <div class="absolute w-3 h-3 bg-gray-900 rotate-45 -top-1 left-1/2 transform -translate-x-1/2 dark:bg-gray-700"></div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div id="button-container" class="flex justify-between pt-4 {% if form.instance.pk and not editable %}hidden{% endif %}">
+                <a href="{% url 'events' %}"class="btn btn-secondary flex items-center">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-{% if form.instance.pk %}save{% else %}plus-circle{% endif %}"></i> {% if form.instance.pk %}Update{% else %}Create{% endif %} Event
+                </button>
+            </div>
+        </form>
+{% if not form.instance.pk or editable %}
+    </div>
+</div>
+{%endif%}
+
+
+<script>
+    // Toggle edit mode functionality
+    function toggleEditMode() {
+        const form = document.getElementById('event-form');
+        const buttonContainer = document.getElementById('button-container');
+        const editButton = document.getElementById('edit-button');
+        
+        // Toggle the data-readonly attribute
+        const isCurrentlyReadOnly = form.getAttribute('data-readonly') === 'true';
+        form.setAttribute('data-readonly', !isCurrentlyReadOnly);
+        
+        // Update the edit button text
+        editButton.textContent = isCurrentlyReadOnly ? 'Cancel' : 'Edit';
+        
+        // Enable/disable form fields
+        Array.from(form.elements).forEach(element => {
+            if (element.name !== 'csrfmiddlewaretoken' && 
+                element.name !== 'organizerLink' && 
+                element.name !== 'registrationLink') {
+                element.disabled = isCurrentlyReadOnly ? false : true;
+            }
+        });
+        
+        // Show/hide the button container
+        buttonContainer.classList.toggle('hidden', !isCurrentlyReadOnly);
+        editButton.classList.toggle('hidden', isCurrentlyReadOnly);
+    }
+
+    // Handle "All day" checkbox to disable time fields
+    document.addEventListener('DOMContentLoaded', function() {
+        const allDayCheckbox = document.getElementById('{{ form.is_all_day.id_for_label }}');
+        const startTimeInput = document.getElementById('{{ form.start_time.id_for_label }}');
+        const endTimeInput = document.getElementById('{{ form.end_time.id_for_label }}');
+        const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+        const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
+        const timeFieldsContainer = startTimeInput.parentElement;
+        const endFieldsContainer = endTimeInput.parentElement;
+        
+        // Hiding the time (start and end) field by checking all day button 
+        function updateTimeFields() { 
+            if (allDayCheckbox.checked) {
+                // Hide elemnts
+                timeFieldsContainer.style.display = "none"; 
+                endFieldsContainer.style.display = "none"; 
+                // Reset to initial stat if any value was writen 
+                startTimeInput.value = "";
+                endTimeInput.value = "";
+            } else {
+                timeFieldsContainer.style.display = "block"; 
+                endFieldsContainer.style.display = "block"; 
+            }
+        }
+
+        function updateDateInput() { 
+            endDateInput.value = startDateInput.value;
+        }
+
+        function updateTimeInput() { 
+            if(startTimeInput.value){
+                let [hours, minutes] = startTimeInput.value.split(':').map(Number);
+                hours = (hours + 1) % 24;
+                
+                let newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                endTimeInput.value = newTime;
+            }
+           
+        }
+        
+        startDateInput.addEventListener('change',updateDateInput);
+        startTimeInput.addEventListener('change',updateTimeInput);
+        allDayCheckbox.addEventListener('change', updateTimeFields);
+        
+        // Apply initial state
+        updateTimeFields(); 
+        updateTimeInput();
+        updateDateInput(); 
+        
+        function setupCopyLabel(labelSelector, inputSelector) {
+        const label = document.querySelector(labelSelector);
+        const input = document.querySelector(inputSelector);
+
+        if (label && input) {
+            label.addEventListener('click', function () {
+                const tempInput = document.createElement('input');
+                document.body.appendChild(tempInput);
+                tempInput.value = input.value;
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                // Afficher une notification
+                const notification = document.createElement('div');
+                notification.textContent = 'Copied to clipboard!';
+                notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg';
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 2000);
+            });
+        }
+    }
+
+    setupCopyLabel('label[for="{{ form.organizerLink.id_for_label }}"]', '#{{ form.organizerLink.id_for_label }}');
+    setupCopyLabel('label[for="{{ form.registrationLink.id_for_label }}"]', '#{{ form.registrationLink.id_for_label }}');
+    
+    
+        
+        
+    });
+    
+</script>
+{% endblock content %}

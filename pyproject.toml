@@ -1,0 +1,17 @@
+[project]
+name = "events-django-2"
+version = "0.1.0"
+description = "A Django project for managing events, made with replit and with an agent, merging Replit's React design with from Hakim's project"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "django-enum>=2.0.2",
+    "django>=5.1.5",
+    "djlint>=1.34.1",
+    "enum-properties>=2.0.1",
+    "nanoid>=2.0.0",
+    "psycopg2-binary>=2.9.10",
+    "python-dotenv>=1.0.1",
+    "redgreenunittest>=0.1.1",
+    "typing-extensions>=4.12.2",
+]

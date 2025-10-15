@@ -1,0 +1,435 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Open+Sans:wght@400;700&display=swap');
+
+:root {
+  --flexup-dark-blue: #1F3F5F;
+  --flexup-green: #70AD47;
+  --flexup-orange: #ED7D31;
+  --flexup-light-blue: #5B9BD5;
+  /* background colors */
+  --light-blue: #d7e1f0;
+  --very-light-blue: #ebebf5;
+  --ultra-light-blue: #f5f5fa;
+  --gray: #ccc;
+  --light-gray: #ddd;
+  --very-light-gray: #f5f5f5;
+  --ultra-light-gray: #fafafa;
+}
+
+.emoji {
+  font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+/* Typography */
+html,
+body {
+  font-family: 'Open Sans', 'Inter', sans-serif;
+  min-width: 500px;
+  color: var(--flexup-dark-blue);
+}
+
+.colored-background {
+  color: var(--flexup-dark-blue);
+}
+
+/* Media */
+
+/* Extra small devices (phones, below 576px) */
+main {
+  padding: 40px;
+  /* align center    */
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: center;
+
+  /* Default for mobile */
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+  main {
+    padding: 20px;
+  }
+
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+  main {
+    padding: 10px;
+  }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  main {
+    padding: 15px;
+  }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  main {
+    padding: 20px;
+  }
+}
+
+/* Main content */
+
+#mainContent {
+  transition: margin-left 0.3s ease;
+}
+
+.mainContent {
+  top: 80px;
+}
+
+#mainContent.hidden { margin-left: 0; }
+#mainContent.mini { margin-left: 48px; }
+#mainContent.full { margin-left: 200px; }
+
+/* Small screens (below md breakpoint) */
+@media (max-width: 767.98px) {
+  #mainContent.hidden,
+  #mainContent.full {
+    margin-left: 0 !important; /* Override any other margin settings */
+  }
+  
+  #mainContent.mini {
+    margin-left: 48px;
+  }
+}
+
+/* Medium screens and up */
+@media (min-width: 768px) {
+  #mainContent.hidden { margin-left: 0; }
+  #mainContent.mini { margin-left: 48px; }
+  #mainContent.full { margin-left: 200px; }
+}
+
+/* Small screens (<576px) */
+@media (max-width: 575.98px) {
+  /* No margin changes for main content */
+  #mainContent.hidden,
+  #mainContent.mini,
+  #mainContent.full {
+    margin-left: 0 !important;
+  }
+}
+
+/* Titles */
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+}
+
+h3 {
+  font-size: 1.1rem;
+  text-decoration: underline;
+  font-weight: normal !important;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+}
+
+h1,
+h2 {
+  font-weight: bold;
+}
+
+/* Responsive typography */
+@media (max-width: 576px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+  h2 {
+    font-size: 1.2rem;
+  }
+  h3 {
+    font-size: 1rem;
+  }
+}
+
+/*  Navbar */
+
+nav {
+  height: 80px;
+  justify-content: left;
+  align-items: center;
+  padding: 20px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  gap: 20px;
+  z-index: 2000;
+  width: 100%;
+  /* margin-bottom: 80px; */
+}
+
+nav>a {
+  text-decoration: none;
+  /* color: rgb(27, 103, 133); */
+  font-weight: bold;
+}
+
+nav>a:hover,
+nav>a:active {
+  color: #cf79f1;
+}
+
+.navbar {
+  padding: 10px;
+  border-bottom: 1px solid #c5c5c5;
+}
+
+.navbar {
+  padding: 10px;
+  border-bottom: 1px solid #c5c5c5;
+}
+
+/* Tables  */
+
+table {
+  border-collapse: separate;
+  width: 100%;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  border-spacing: 0;
+  /* Ensures no extra space between table cells */
+}
+
+#sortable-table th, .sortable-table tr[data-link]{
+  cursor: pointer;
+}
+
+th {
+  background-color: #eee;
+  text-align: left;
+  font-weight: bold;
+  border: none;
+  /* No internal borders */
+}
+
+td {
+  text-align: left;
+  border-top: 1px solid #eee;
+}
+
+th,
+td {
+  padding: 5px;
+  min-width: 10px;
+  max-width: 50px;
+}
+
+/* when I hover on a row, its background color becomes very light blue */
+tr:hover {
+  background-color: #f0f8ff;
+}
+
+/* Forms */
+form {
+  /* padding: 20px; */
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+}
+
+/* in the screen width is less than 800 px reduct padding to 10px */
+@media (max-width: 800px) {
+  form {
+    padding: 10px;
+  }
+}
+
+form>* {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+}
+
+form>*:last-child {
+  margin-bottom: 0;
+}
+
+form label {
+  width: 140px;
+  height: 30px;
+  margin-right: 10px;
+  padding: 5px;
+  align-self: flex-start;
+  width: 150px;
+}
+
+/* default height for text area is 200px, minimum is 100px */
+form textarea {
+  height: 100px;
+  min-height: 50px;
+  max-height: 200px;
+}
+
+form input, form select {
+  color: var(--flexup-dark-blue);
+  width: 400px;
+  outline: 1px solid var(--gray);
+  border:none;
+  border-radius: 3px;
+  padding: 5px 10px;
+  /* background-clip: padding-box;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; */
+}
+
+td input, td select {
+  width: 100% !important;
+  height: 30px;
+  color: var(--flexup-dark-blue);
+  outline: 1px solid var(--gray);
+  border:none;
+  border-radius: 3px;
+  padding: 5px 10px;
+}
+
+td {
+  padding: 10px;
+}
+
+form input:disabled,
+form input:read-only,
+form textarea:disabled,
+form select:disabled {
+  outline-color:rgb(255, 255, 255);
+  /*background-color:white;*/
+}
+
+form>*>input:enabled:hover,
+textarea:enabled:hover,
+select:enabled:hover,
+form>*>input:focus,
+textarea:focus,
+select:focus {
+  /* background-color: #fff; */
+  /* outline: 0; */
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+form>*>input[type="datetime-local"],
+form>*>input[type="date"] {
+  width: 200px;
+}
+
+form>*>input {
+  height: 30px;
+}
+
+.errorlist {
+  color: red;
+  font-size: 0.8rem;
+}
+
+.debugBtn {
+  border: none;
+  border-radius: 3px;
+}
+
+
+button, .btn {
+  height: 45px;
+  width: 150px;
+  min-width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 3px;
+  background-color: var(--flexup-dark-blue);
+  color: white;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+button i, .btn i {
+  margin-right: 5px;
+}
+
+button.btn-primary, .btn-primary {
+  background-color: var(--flexup-dark-blue);
+}
+
+button.btn-success, .btn-success {
+  background-color: var(--flexup-green);
+}
+
+button.btn-danger, .btn-danger {
+  background-color: #dc3545;
+}
+
+button.btn-warning, .btn-warning {
+  background-color: var(--flexup-orange);
+}
+
+button.btn-secondary, .btn-secondary {
+  background-color: #6c757d;
+}
+
+#edit-button {
+  margin: 0 10px;
+}
+
+
+/* if screen size is less than 1000px, hide nav-center */
+#nav-center {
+  display: none;
+}
+
+/* if screen size is less than 1000px, hide nav-center */
+
+/***** Styling page title *****/
+
+.title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.title-content {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.edit-button-container {
+  margin-left: auto;
+}
+
+/***** Styling the Generic Table's Add Button *****/
+
+.flexup-main-btn {
+  height: 50px;
+  padding: 6px 12px 6px 6px;
+  background-color: var(--flexup-dark-blue);
+  color: #fff;
+}
+
+.flexup-main-btn:hover {
+  background-color: #acc4e7;
+}
+
+/* Wireframe during development */ 
+/* 
+div,
+section,
+main,
+header,
+footer,
+form {
+  border: 0.5px solid rgba(194, 2, 252, 0.2) !important;
+  background-color: rgba(129, 35, 252, 0.03) !important;
+} */

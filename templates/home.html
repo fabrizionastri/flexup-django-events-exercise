@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Event Manager - Home{% endblock title %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8 pt-12">
+    <div class="text-center space-y-4">
+        <h1 class="text-4xl font-bold">Simple Django DTL Event Management</h1>
+        <p class="text-lg text-gray-600">
+            Create and share events without the hassle of authentication. Just
+            share the link!
+        </p>
+        <a
+            href="{% url 'event_create' %}"
+            class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+        >
+            Create New Event
+        </a>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mt-12">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-2">Easy Planning</h2>
+            <p class="text-gray-600">
+                Create events in seconds with our simple form. Get unique URLs
+                for sharing and managing your event.
+            </p>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-2">Simple Responses</h2>
+            <p class="text-gray-600">
+                Attendees can easily RSVP without creating an account. Track
+                responses and manage your guest list effortlessly.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}{{ event.name }} - Register{% endblock title %}
+
+{% block content %}
+<script>
+    function openResponseForm() {
+        document.getElementById('response-modal').classList.remove('hidden');
+    }
+    
+    function closeResponseForm() {
+        document.getElementById('response-modal').classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside the form
+    document.getElementById('response-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeResponseForm();
+        }
+    });
+</script>
+<div class="mx-auto pt-12 w-full" style="max-width: 1600px;">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Event Details Column -->
+        <div class="lg:col-span-1">
+            <div class="bg-white p-6 rounded-lg shadow-lg ">
+                <div class="flex justify-between items-center mb-4"></div>
+                <h1 class="text-2xl font-bold mb-4">{{ event.name }}</h1>
+                {% include 'event_form.html' %}
+            </div>
+        </div>
+        <div class="lg:col-span-1">
+            <!-- Current Responses -->
+            <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold mb-4">Current Responses {% if event.max_attendees %}({{ confirmed_responses.count }}/{{ event.max_attendees }}){%endif%}</h2>
+                    <button onclick="openResponseForm()" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add New Response
+                    </button>
+                </div>
+                {% if confirmed_responses %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th scope="col" class="text-sm font-medium text-gray-900 px-4 py-2 text-left">Name</th>
+                                <th scope="col" class="text-sm font-medium text-gray-900 px-4 py-2 text-left">Status</th>
+                                <th scope="col" class="text-sm font-medium text-gray-900 px-4 py-2 text-left">Notes</th>
+                                <th scope="col" class="text-sm font-medium text-gray-900 px-4 py-2 text-left">#</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for response in confirmed_responses %}                               
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="text-sm text-gray-900 px-4 py-3">{{ response.name }}</td>
+                                <td class="text-sm text-gray-900 px-4 py-3">
+                                    {% with symbol=response.status.symbol %}
+                                    <span class="inline-flex items-center">
+                                        <span>{{ response.get_status_display }}</span>
+                                        
+                                    </span>
+                                    {% endwith %}
+                                </td>
+                                <td class="text-sm text-gray-900 px-4 py-3">{{ response.message|truncatechars:50 }}</td>
+                                <td class="text-sm text-gray-900 px-4 py-3">{{ forloop.counter }}</td>
+                            </tr>                   
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {%endif%}
+            </div>
+        </div>
+</div>
+<!-- Response Form Modal -->
+{% include "response_form.html"%}
+{% if response %}
+<script src="/static/js/token-storage.js"></script>
+<script>
+    function toggleEditMode() {
+        const form = document.getElementById('response-form');
+        const buttonContainer = document.getElementById('button-container');
+        const actionContainer = document.getElementById('action-container');
+        const editButton = document.getElementById('edit-button');
+        
+        // Toggle the data-readonly attribute
+        const isCurrentlyReadOnly = form.getAttribute('data-readonly') === 'true';
+        form.setAttribute('data-readonly', !isCurrentlyReadOnly);
+        
+        // Update the edit button text
+        editButton.textContent = isCurrentlyReadOnly ? 'Cancel' : 'Edit';
+        
+        // Enable/disable form fields
+        Array.from(form.elements).forEach(element => {
+            if (element.name !== 'csrfmiddlewaretoken' && 
+                element.name !== 'is_organizer') {
+                element.disabled = isCurrentlyReadOnly ? false : true;
+            }
+        });
+        
+        // Show/hide the button container
+        buttonContainer.classList.toggle('hidden', !isCurrentlyReadOnly);
+        actionContainer.classList.toggle('hidden', !isCurrentlyReadOnly);
+    }
+
+    function deleteResponse(eventSlug, responseToken) {
+        if (confirm('Are you sure you want to delete your response? This action cannot be undone.')) {
+            fetch(`/event/${eventSlug}/response/${responseToken}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Remove from localStorage before redirecting
+                    TokenStorage.deleteResponseToken(eventSlug, responseToken);
+                    window.location.href = `/event/${eventSlug}/`;
+                } else {
+                    alert('Failed to delete your response.');
+                }
+            });
+        }
+    }
+    
+    // Initialize form fields to disabled if in readonly mode
+    document.addEventListener('DOMContentLoaded', function() {
+        // Disable event form fields initially
+        const form = document.getElementById('event-form');
+        Array.from(form.elements).forEach(element => {
+            if (element.name !== 'csrfmiddlewaretoken') {
+                element.disabled = true;
+            }
+        });
+
+        const responseForm = document.getElementById('response-form');
+        if (responseForm.getAttribute('data-readonly') === 'true') {
+            Array.from(responseForm.elements).forEach(element => {
+                if (element.name !== 'csrfmiddlewaretoken' && 
+                    element.name !== 'is_organizer') {
+                    element.disabled = true;
+                }
+            });
+        }
+        
+        // Save the response token in local storage if available
+        const eventSlug = '{{ event.event_slug }}';
+        const eventName = '{{ event.name }}';
+        const responseToken = '{{ response.response_token|default:"" }}';
+        const responseName = '{{ response.name|default:"" }}';
+        
+        if (responseToken) {
+            const currentUrl = window.location.href;
+            // Save or update the token
+            TokenStorage.saveResponseToken(eventSlug, eventName, responseToken, responseName, currentUrl);
+            // Update last accessed time
+            TokenStorage.touchResponseToken(eventSlug, responseToken);
+        }
+    });
+</script>
+{% endif %}
+{% endblock content %}

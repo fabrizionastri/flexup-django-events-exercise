@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}My Events Dashboard{% endblock title %}
+
+{% block content %}
+<div class="mx-auto pt-8 pb-16 w-full" style="max-width:1600px;">
+    <h1 class="text-3xl font-bold mb-6">My Events Dashboard</h1>
+    
+    <div class="grid grid-cols-1 gap-8"  >
+        <!-- Events I Organize -->
+        <div id="organizer-events" class="px-4">
+            <h2 class="text-2xl font-semibold mb-4">Events I Organize</h2>
+            <div id="organizer-events-container" class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="p-8 text-center text-gray-500 organizer-empty-state">
+                    <p class="mb-4">You haven't created any events yet or your browser data has been cleared.</p>
+                    <a href="{% url 'event_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create New Event
+                    </a>
+                </div>
+                <table class="min-w-full hidden" id="organizer-table">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">Event Name</th>
+                            <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">Last Accessed</th>
+                            <th scope="col" class="text-sm font-medium text-gray-900 px-6 py-4 text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="organizer-table-body">
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Events I'm Responding To -->
+        <div id="response-events" class="px-4">
+            <h2 class="text-2xl font-semibold mb-4">Events I'm Responding To</h2>
+            <div id="response-events-container" class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="p-8 text-center text-gray-500 response-empty-state">
+                    <p class="mb-4">You haven't responded to any events yet or your browser data has been cleared.</p>
+                    <a href="{% url 'events' %}" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Browse Events
+                    </a>
+                </div>
+                <div id="response-accordion" class="hidden">
+                    <!-- Event sections will be added dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template for organizer event row -->
+<template id="organizer-row-template">
+    <tr class="bg-white border-b transition hover:bg-gray-50">
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            <a href="#" class="organizer-event-link hover:text-blue-600 hover:underline"></a>
+        </td>
+        <td class="text-sm text-gray-500 px-6 py-4 whitespace-nowrap organizer-last-accessed"></td>
+        <td class="text-sm px-6 py-4 whitespace-nowrap">
+            <div class="flex space-x-3">
+                <a href="#" class="organizer-manage-link btn btn-primary">
+                    <i class="bi bi-gear"></i> Manage
+                </a>
+                <button class="organizer-delete-btn btn btn-danger">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+        </td>
+    </tr>
+</template>
+
+<!-- Template for response event section -->
+<template id="response-event-template">
+    <div class="response-event border-b last:border-b-0">
+        <div class="response-event-header p-4 cursor-pointer flex justify-between items-center hover:bg-gray-50">
+            <h3 class="font-medium response-event-name"></h3>
+            <div class="flex items-center">
+                <span class="response-count mr-2 bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full"></span>
+                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="response-event-body hidden">
+            <!-- Response rows will be added here -->
+        </div>
+    </div>
+</template>
+
+<!-- Template for response row -->
+<template id="response-row-template">
+    <div class="response-row flex justify-between items-center p-4 border-t hover:bg-gray-50">
+        <div>
+            <div class="font-medium response-name"></div>
+            <div class="text-sm text-gray-500 response-last-accessed"></div>
+        </div>
+        <div class="flex space-x-3">
+            <a href="#" class="response-manage-link btn btn-primary">
+                <i class="bi bi-gear"></i> Manage
+            </a>
+            <button class="response-delete-btn btn btn-danger">
+                <i class="bi bi-trash"></i> Remove
+            </button>
+        </div>
+    </div>
+</template>
+
+<script src="/static/js/token-storage.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboard();
+        
+        // Add event listeners for accordion toggling
+        document.addEventListener('click', function(e) {
+            const header = e.target.closest('.response-event-header');
+            if (header) {
+                const body = header.nextElementSibling;
+                const icon = header.querySelector('svg');
+                
+                body.classList.toggle('hidden');
+                if (!body.classList.contains('hidden')) {
+                    icon.classList.add('rotate-180');
+                } else {
+                    icon.classList.remove('rotate-180');
+                }
+            }
+        });
+    });
+    
+    function loadDashboard() {
+        loadOrganizerEvents();
+        loadResponseEvents();
+    }
+    
+    function loadOrganizerEvents() {
+        const organizerEvents = TokenStorage.getOrganizerTokens();
+        const tableBody = document.getElementById('organizer-table-body');
+        const table = document.getElementById('organizer-table');
+        const emptyState = document.querySelector('.organizer-empty-state');
+        
+        // Clear existing content
+        tableBody.innerHTML = '';
+        
+        // Check if there are any events
+        if (Object.keys(organizerEvents).length === 0) {
+            table.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            return;
+        }
+        
+        // Sort events by last accessed (most recent first)
+        const sortedEvents = Object.entries(organizerEvents).sort((a, b) => {
+            return new Date(b[1].lastAccessed) - new Date(a[1].lastAccessed);
+        });
+        
+        // Add rows for each event
+        sortedEvents.forEach(([eventSlug, eventData]) => {
+            const template = document.getElementById('organizer-row-template');
+            const clone = document.importNode(template.content, true);
+            
+            // Fill in the data
+            clone.querySelector('.organizer-event-link').textContent = eventData.name;
+            clone.querySelector('.organizer-event-link').href = eventData.url;
+            clone.querySelector('.organizer-manage-link').href = eventData.url;
+            
+            // Format date
+            const lastAccessed = new Date(eventData.lastAccessed);
+            clone.querySelector('.organizer-last-accessed').textContent = formatDate(lastAccessed);
+            
+            // Set up delete button
+            const deleteBtn = clone.querySelector('.organizer-delete-btn');
+            deleteBtn.addEventListener('click', function() {
+                if (confirm(`Remove "${eventData.name}" from your dashboard? This won't delete the actual event, just remove it from this list.`)) {
+                    TokenStorage.deleteOrganizerToken(eventSlug);
+                    loadOrganizerEvents(); // Refresh the list
+                }
+            });
+            
+            tableBody.appendChild(clone);
+        });
+        
+        // Show the table, hide empty state
+        table.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+    }
+    
+    function loadResponseEvents() {
+        const responseEvents = TokenStorage.getResponseTokens();
+        const container = document.getElementById('response-accordion');
+        const emptyState = document.querySelector('.response-empty-state');
+        
+        // Clear existing content
+        container.innerHTML = '';
+        
+        // Check if there are any responses
+        if (Object.keys(responseEvents).length === 0) {
+            container.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            return;
+        }
+        
+        // Sort events by last accessed (most recent first)
+        const sortedEvents = Object.entries(responseEvents).sort((a, b) => {
+            // Get most recent response for each event
+            const aLatest = Object.values(a[1].responses).reduce((latest, response) => {
+                return new Date(response.lastAccessed) > new Date(latest) ? response.lastAccessed : latest;
+            }, '2000-01-01');
+            
+            const bLatest = Object.values(b[1].responses).reduce((latest, response) => {
+                return new Date(response.lastAccessed) > new Date(latest) ? response.lastAccessed : latest;
+            }, '2000-01-01');
+            
+            return new Date(bLatest) - new Date(aLatest);
+        });
+        
+        // Create sections for each event
+        sortedEvents.forEach(([eventSlug, eventData]) => {
+            const eventTemplate = document.getElementById('response-event-template');
+            const eventClone = document.importNode(eventTemplate.content, true);
+            
+            // Fill in event data
+            eventClone.querySelector('.response-event-name').textContent = eventData.name;
+            const responseCount = Object.keys(eventData.responses).length;
+            eventClone.querySelector('.response-count').textContent = `${responseCount} response${responseCount !== 1 ? 's' : ''}`;
+            
+            const responseBody = eventClone.querySelector('.response-event-body');
+            
+            // Sort responses by last accessed (most recent first)
+            const sortedResponses = Object.entries(eventData.responses).sort((a, b) => {
+                return new Date(b[1].lastAccessed) - new Date(a[1].lastAccessed);
+            });
+            
+            // Add rows for each response
+            sortedResponses.forEach(([responseToken, responseData]) => {
+                const rowTemplate = document.getElementById('response-row-template');
+                const rowClone = document.importNode(rowTemplate.content, true);
+                
+                // Fill in response data
+                rowClone.querySelector('.response-name').textContent = responseData.name;
+                rowClone.querySelector('.response-manage-link').href = responseData.url;
+                
+                // Format date
+                const lastAccessed = new Date(responseData.lastAccessed);
+                rowClone.querySelector('.response-last-accessed').textContent = formatDate(lastAccessed);
+                
+                // Set up delete button
+                const deleteBtn = rowClone.querySelector('.response-delete-btn');
+                deleteBtn.addEventListener('click', function() {
+                    if (confirm(`Remove "${responseData.name}" from your dashboard? This won't delete your actual response, just remove it from this list.`)) {
+                        TokenStorage.deleteResponseToken(eventSlug, responseToken);
+                        loadResponseEvents(); // Refresh the list
+                    }
+                });
+                
+                responseBody.appendChild(rowClone);
+            });
+            
+            container.appendChild(eventClone);
+        });
+        
+        // Show the accordion, hide empty state
+        container.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+    }
+    
+    function formatDate(date) {
+        const now = new Date();
+        const diff = now - date;
+        
+        // Less than a day ago
+        if (diff < 24 * 60 * 60 * 1000) {
+            if (diff < 60 * 60 * 1000) {
+                // Less than an hour
+                const minutes = Math.floor(diff / (60 * 1000));
+                return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+            } else {
+                // Hours
+                const hours = Math.floor(diff / (60 * 60 * 1000));
+                return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+            }
+        }
+        
+        // Less than a week ago
+        if (diff < 7 * 24 * 60 * 60 * 1000) {
+            const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+            return `${days} day${days !== 1 ? 's' : ''} ago`;
+        }
+        
+        // Format as date
+        return date.toLocaleDateString();
+    }
+</script>
+{% endblock content %}

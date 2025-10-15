@@ -1,0 +1,161 @@
+<div id="response-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white p-4 rounded-lg shadow-lg w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold" id="response-modal-title">RSVP to this event</h2>
+        </div>
+        
+        <form method="POST" id="response-form" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="response_token" id="response-token">
+            <input type="hidden" name="is_organizer" value="{% if is_organizer %}True{% else %}False{% endif %}">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="{{ response_form.name.id_for_label }}">
+                    {{ response_form.name.label }}
+                </label>
+                {{ response_form.name}}
+                {% if response_form.name.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ response_form.name.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="{{ response_form.email.id_for_label }}">
+                    {{ response_form.email.label }}
+                </label>
+                {{ response_form.email }}
+                {% if response_form.email.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ response_form.email.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="{{ response_form.status.id_for_label }}">
+                    {{ response_form.status.label }}
+                </label>
+                {{ response_form.status }}
+                {% if response_form.status.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ response_form.status.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700" for="{{ response_form.message.id_for_label }}">
+                    {{ response_form.message.label }}
+                </label>
+                {{ response_form.message }}
+                {% if response_form.message.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ response_form.message.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            {% if is_organizer %}
+            <div class="flex items-center">
+                <label class="ml-2 text-sm font-medium text-gray-700" for="{{ response_form.is_waiting_list.id_for_label }}">
+                    {{ response_form.is_waiting_list.label }}
+                </label>
+                {{ response_form.is_waiting_list }}
+            </div>
+            {% endif %}
+            
+            <div id="text_note" class="text-sm text-blue-600 bg-blue-50 p-3 rounded mt-4">
+                <p>You are adding this response as an organizer. You can set any status and control waiting list placement.</p>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeResponseForm()" class="btn btn-secondary">
+                    Cancel
+                </button>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openResponseForm(responseData = null) {
+        const modal = document.getElementById('response-modal');
+        const form = document.querySelector('#response-form');
+        
+        // Reset form
+        form.reset();
+        
+        // If editing a response, populate the form
+        if (responseData) {
+            document.getElementById('text_note').textContent = 'You are editing this response as an organizer.';
+            document.getElementById('response-modal-title').textContent = 'Edit Response';
+
+            document.querySelector('#response-name').value = responseData.name || '';
+            document.querySelector('#response-email').value = responseData.email && responseData.email !== 'None' ? responseData.email : '';
+            document.querySelector('#response-status').value = responseData.status || '';
+            document.querySelector('#response-message').value = responseData.message || '';
+            
+            if (document.querySelector('#response-waiting-list')) {
+                document.querySelector('#response-waiting-list').checked = responseData.is_waiting_list === true || 
+                responseData.is_waiting_list === 'true';
+            }
+            
+            document.querySelector('#response-token').value = responseData.token;
+        } else {
+            if ('{{ is_organizer }}' == 'True'){
+                document.getElementById('text_note').textContent = 'You are adding this response as an organizer. You can set any status and control waiting list placement.';
+            } else {
+                document.getElementById('text_note').textContent = 'You will be added to the waiting list.';
+            }
+            document.getElementById('response-modal-title').textContent = 'Add New Response';
+        }
+
+        // Remove any existing submit event listeners to prevent duplicates
+        form.removeEventListener('submit', handleFormSubmit);
+        
+        // Add new submit handler
+        form.addEventListener('submit', handleFormSubmit);
+        modal.classList.remove('hidden');
+    };
+
+    function handleFormSubmit(e) {
+        e.preventDefault();
+        const form = e.target;
+        const formData = new FormData(form);
+        
+        // Determine the URL based on whether we're editing or creating
+        const url = form.querySelector('#response-token').value 
+            ? `/event/${'{{ event.event_slug }}'}/response/${form.querySelector('#response-token').value}/`
+            : "{% url 'event_register' event.event_slug %}";
+        
+        if ('{{ is_organizer }}' == 'True'){
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Close modal and reload page
+                    document.getElementById('response-modal').classList.add('hidden');
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        } else {
+            form.submit()
+        }
+    };
+
+    function closeResponseForm() {
+        document.getElementById('response-modal').classList.add('hidden');
+    };
+    
+    // Close modal when clicking outside
+    document.getElementById('response-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeResponseForm();
+        }
+    });
+</script>

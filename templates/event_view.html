@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}{{ event.name }}{% endblock title %}
+
+{% block content %}
+<div class="mx-auto pt-12 w-full" style="max-width: 1600px;">
+
+    <div class="grid grid-cols-3 lg:grid-cols-3 gap-6">
+        <!-- Event Details Column -->
+        <div class="lg:col-span-1 col-start-2 lg:col-start-2">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="flex justify-between items-center mb-4"></div>
+                <h1 class="text-2xl font-bold mb-6">{{ event.name }}</h1>
+                {% include 'event_form.html' %}
+                
+                <div class="mt-8 flex justify-between">
+                    <a href="{% url 'events' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Events
+                    </a>
+                    <a href="{% url 'event_register' event.event_slug %}" class="btn btn-primary">
+                        <i class="bi bi-calendar-check"></i> RSVP to Event
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

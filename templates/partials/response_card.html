@@ -1,0 +1,80 @@
+<div class="bg-white p-4 rounded-lg shadow border border-gray-100">
+    <div class="grid grid-cols-2 gap-2">
+        <div class="text-sm font-medium text-gray-500">#</div>
+        <div class="text-sm text-gray-900">{{ forloop.counter }}</div>
+
+        <div class="text-sm font-medium text-gray-500">Name</div>
+        <div class="text-sm text-gray-900">{{ response.name }}</div>
+
+        <div class="text-sm font-medium text-gray-500">Status</div>
+        <div class="text-sm text-gray-900">
+            {% if is_organizer %}
+                <select 
+                    name="status" 
+                    class="text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 w-full"
+                    hx-post="{% url 'update_response_status' event.event_slug response.response_token organizer_token%}"
+                    hx-target="#response-{{ response.response_token }}"
+                    hx-swap="outerHTML"
+                >
+                    {% for status_value, status_label in response.get_status_choices %}
+                        <option value="{{ status_value }}" {% if response.status.value == status_value %}selected{% endif %}>
+                            {{ status_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                {{ response.get_status_display }}
+                {% if response.is_waiting_list %}
+                    <span class="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Waiting</span>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="text-sm font-medium text-gray-500">Contact</div>
+        <div class="text-sm text-gray-900">
+            {% if response.email %}
+                <a href="mailto:{{ response.email }}" class="text-blue-600 hover:underline">{{ response.email }}</a>
+            {% else %}
+                <span class="text-gray-400">No email</span>
+            {% endif %}
+        </div>
+
+        <div class="text-sm font-medium text-gray-500">Waiting List</div>
+        <div class="text-sm text-gray-900">{{ response.is_waiting_list|yesno:"Yes,No" }}</div>
+
+        <div class="text-sm font-medium text-gray-500">Actions</div>
+        <div class="text-sm text-gray-900">
+            <div class="flex space-x-2">
+                <button class="text-gray-400 hover:text-gray-600 bg-transparent hover:bg-transparent focus:bg-transparent m-0 px-1 py-1 text-sm"
+                    title="Edit response"
+                    onclick="editResponse(
+                        '{{ response.response_token }}',
+                        '{{ response.name|escapejs }}',
+                        '{{ response.email|escapejs }}',
+                        '{{ response.status.value|escapejs }}',
+                        '{{ response.message|escapejs }}',
+                        '{{ response.is_waiting_list|yesno:"True,False" }}'
+                    )">
+                    <i class="bi bi-pencil-square text-blue-400 text-lg"></i>
+                </a>
+                {% if is_organizer %}
+                    <button 
+                        hx-post="{% url 'toggle_waiting_list' event.event_slug response.response_token organizer_token%}"
+                        hx-target="#response-{{ response.response_token }}"
+                        hx-swap="outerHTML"
+                        class="bg-transparent hover:bg-transparent focus:bg-transparent {% if response.is_waiting_list %}text-yellow-400 hover:text-yellow-600{% else %}text-gray-400 hover:text-gray-600{% endif %}"
+                        title="{% if response.is_waiting_list %}Remove from waiting list{% else %}Add to waiting list{% endif %}"
+                    >
+                        <i class="bi {% if response.is_waiting_list %}bi-check-circle text-green-400{% else %}bi-person-plus text-yellow-600{% endif %}"></i>
+                    </button>
+                {% endif %}
+                <button 
+                    onclick="deleteResponse('{{ event.event_slug }}', '{{ response.response_token }}')"
+                    class="hover:text-red-800 text-red-600 hover:text-red-800 bg-transparent hover:bg-transparent focus:bg-transparent m-0 px-1 py-1 text-sm"
+                    >
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

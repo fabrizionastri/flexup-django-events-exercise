@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}Manage Response: {{ response.name }}{% endblock title %}
+
+{% block content %}
+<div class="mx-auto pt-12 w-full" style="max-width: 1600px;">
+
+    <div class="grid grid-cols-2 md:grid-cols-2 gap-8">
+        <!-- Event Details -->
+        <div class="lg:col-span-1 col-start-1 lg:col-start-1">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="flex justify-between items-center mb-4"></div>
+                <h1 class="text-2xl font-bold mb-4">{{ event.name }}</h1>
+                {% include 'event_form.html' %}              
+                <div class="mt-6">
+                    <a href="{% url 'event_view' event.event_slug %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Event
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Response Form -->
+        <div class="lg:col-span-1 col-start-2 lg:col-start-2">
+            <div class="bg-white p-6 rounded-lg shadow-lg sticky top-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Your Response</h2>
+                    <button id="edit-response-button" onclick="toggleEditResponseMode()" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </div>
+                
+                <form method="POST" id="response-form" data-readonly="true" class="space-y-4">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="{{ response_form.name.id_for_label }}">
+                            {{ response_form.name.label }}
+                        </label>
+                        {{ response_form.name }}
+                        {% if response_form.name.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ response_form.name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="{{ response_form.email.id_for_label }}">
+                            {{ response_form.email.label }}
+                        </label>
+                        {{ response_form.email }}
+                        {% if response_form.email.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ response_form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="{{ response_form.status.id_for_label }}">
+                            {{ response_form.status.label }}
+                        </label>
+                        {{ response_form.status }}
+                        {% if response_form.status.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ response_form.status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="{{ response_form.message.id_for_label }}">
+                            {{ response_form.message.label }}
+                        </label>
+                        {{ response_form.message }}
+                        {% if response_form.message.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ response_form.message.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    {% if response.is_waiting_list %}
+                    <div class="text-sm text-yellow-600 bg-yellow-50 p-3 rounded mt-4">
+                        <p>Your response is currently on the waiting list. The organizer will notify you if a spot becomes available.</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if response_form.response_link %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700" for="{{ response_form.response_link.id_for_label }}">
+                            {{ response_form.response_link.label }}
+                        </label>
+                        {{ response_form.response_link }}
+                        <p class="text-gray-500 text-xs  pl-1 mt-1">Click to copy this link - save it to update your response later.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Save/Cancel/Delete Buttons - Hidden by default -->
+                    <div id="button-response-container" class="hidden flex justify-between mt-6">
+                        <button type="button" onclick="toggleEditResponseMode()" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                        
+                        <div class="space-x-2">
+                            <button type="button" onclick="deleteResponse('{{ event.event_slug }}', '{{ response.response_token }}')" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Save
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/token-storage.js"></script>
+<script>
+    function toggleEditResponseMode() {
+        const responseForm = document.getElementById('response-form');
+        const buttonContainer = document.getElementById('button-response-container');
+        const editButton = document.getElementById('edit-response-button');
+        
+        // Toggle the data-readonly attribute
+        const isCurrentlyReadOnly = responseForm.getAttribute('data-readonly') === 'true';
+        responseForm.setAttribute('data-readonly', !isCurrentlyReadOnly);
+        
+        // Update the edit button text
+        editButton.textContent = isCurrentlyReadOnly ? 'Cancel' : 'Edit';
+        
+        // Enable/disable form fields
+        Array.from(responseForm.elements).forEach(element => {
+            if (element.name !== 'csrfmiddlewaretoken' && 
+                element.name !== 'response_link') {
+                element.disabled = isCurrentlyReadOnly ? false : true;
+            }
+        });
+        
+        // Show/hide the button container
+        buttonContainer.classList.toggle('hidden', !isCurrentlyReadOnly);
+        editButton.classList.toggle('hidden', isCurrentlyReadOnly);
+    }
+    
+    function deleteResponse(eventSlug, responseToken) {
+        if (confirm('Are you sure you want to delete your response? This action cannot be undone.')) {
+            fetch(`/event/${eventSlug}/response/${responseToken}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Remove from localStorage before redirecting
+                    TokenStorage.deleteResponseToken(eventSlug, responseToken);
+                    window.location.href = `/event/${eventSlug}/`;
+                } else {
+                    alert('Failed to delete your response.');
+                }
+            });
+        }
+    }
+    
+    // Set up copy to clipboard for link and save token
+    document.addEventListener('DOMContentLoaded', function() {
+        const response_link = document.getElementById('{{ response_form.response_link.id_for_label }}');
+        
+        if (response_link) {
+            response_link.addEventListener('click', function() {
+                response_link.select();
+                document.execCommand('copy');
+                
+                // Show copy notification
+                const notification = document.createElement('div');
+                notification.textContent = 'Copied to clipboard!';
+                notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg';
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 2000);
+            });
+        }
+        
+        // Disable form fields initially
+        const responseForm = document.getElementById('response-form');
+        Array.from(responseForm.elements).forEach(element => {
+            if (element.name !== 'csrfmiddlewaretoken' && 
+                element.name !== 'response_link') {
+                element.disabled = true;
+            }
+        });
+        
+        // Save the response token in local storage
+        const eventSlug = '{{ event.event_slug }}';
+        const eventName = '{{ event.name }}';
+        const responseToken = '{{ response.response_token }}';
+        const responseName = '{{ response.name }}';
+        const currentUrl = window.location.href;
+        
+        // Save or update the token
+        TokenStorage.saveResponseToken(eventSlug, eventName, responseToken, responseName, currentUrl);
+        // Update last accessed time
+        TokenStorage.touchResponseToken(eventSlug, responseToken);
+        
+        // Add dashboard link notification if first visit
+        const hasShownNotification = sessionStorage.getItem('shown_dashboard_notification');
+        if (!hasShownNotification) {
+            const dashboardNotification = document.createElement('div');
+            dashboardNotification.innerHTML = `
+                <div class="fixed bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg max-w-sm border-l-4 border-blue-500 z-50 flex items-start">
+                    <div class="flex-1">
+                        <p class="font-medium">Response saved to your dashboard!</p>
+                        <p class="text-sm text-gray-600 mt-1">You can access all your responses from the dashboard.</p>
+                        <div class="mt-3">
+                            <a href="/dashboard/" class="text-blue-600 hover:text-blue-800 font-medium">View Dashboard</a>
+                            <button class="ml-4 text-gray-500 hover:text-gray-700" id="dismiss-notification">Dismiss</button>
+                        </div>
+                    </div>
+                    <button class="ml-4 text-gray-400 hover:text-gray-600" id="close-notification">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(dashboardNotification);
+            
+            // Set up close button
+            document.getElementById('close-notification').addEventListener('click', function() {
+                dashboardNotification.remove();
+            });
+            
+            document.getElementById('dismiss-notification').addEventListener('click', function() {
+                dashboardNotification.remove();
+                sessionStorage.setItem('shown_dashboard_notification', 'true');
+            });
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (dashboardNotification.parentNode) {
+                    dashboardNotification.remove();
+                }
+            }, 10000);
+        }
+    });
+</script>
+{% endblock content %}
